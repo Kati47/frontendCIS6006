@@ -1,0 +1,22 @@
+{
+  "authenticate": "Autenticarse",
+  "welcome": "Bienvenido de nuevo",
+  "enterDetails": "Ingrese sus datos para iniciar sesión",
+  "email": "Correo electrónico",
+  "password": "Contraseña",
+  "forgotPassword": "¿Olvidó su contraseña?",
+  "signIn": "Iniciar sesión",
+  "signingIn": "Iniciando sesión...",
+  "noAccount": "¿No tiene una cuenta?",
+  "signUp": "Registrarse",
+  
+  "register": "Registrarse",
+  "createAccount": "Crear una cuenta",
+  "registerDetails": "Complete su información para crear una cuenta",
+  "name": "Nombre completo",
+  "confirmPassword": "Confirmar contraseña",
+  "signingUp": "Registrando...",
+  "haveAccount": "¿Ya tiene una cuenta?",
+  "passwordRequirements": "La contraseña debe tener al menos 8 caracteres",
+  "passwordsNotMatch": "Las contraseñas no coinciden"
+}
