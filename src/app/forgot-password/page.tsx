@@ -13,59 +13,7 @@ import { AlertCircle, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-// Simple translations object for client-side access
-const translations = {
-  en: {
-    forgotPassword: "Forgot Password",
-    resetInstructions: "Enter your email address and we'll send you instructions to reset your password",
-    email: "Email",
-    sendResetLink: "Send Reset Link",
-    sending: "Sending...",
-    backToLogin: "Back to login",
-    emailSent: "Reset link sent",
-    emailSentDesc: "Check your inbox for instructions on how to reset your password",
-    errorMessage: "There was an error sending the reset link",
-    emailRequired: "Email address is required",
-    validEmail: "Please enter a valid email address",
-    serverError: "Server error. Please try again later.",
-    checkSpam: "If you don't see the email in your inbox, please check your spam folder.",
-    emailNotFound: "No account found with this email address."
-  },
-  fr: {
-    forgotPassword: "Mot de passe oublié",
-    resetInstructions: "Entrez votre adresse e-mail et nous vous enverrons des instructions pour réinitialiser votre mot de passe",
-    email: "E-mail",
-    sendResetLink: "Envoyer le lien de réinitialisation",
-    sending: "Envoi en cours...",
-    backToLogin: "Retour à la connexion",
-    emailSent: "Lien de réinitialisation envoyé",
-    emailSentDesc: "Consultez votre boîte de réception pour obtenir des instructions sur la réinitialisation de votre mot de passe",
-    errorMessage: "Une erreur s'est produite lors de l'envoi du lien de réinitialisation",
-    emailRequired: "L'adresse e-mail est requise",
-    validEmail: "Veuillez entrer une adresse e-mail valide",
-    serverError: "Erreur du serveur. Veuillez réessayer plus tard.",
-    checkSpam: "Si vous ne voyez pas l'e-mail dans votre boîte de réception, veuillez vérifier votre dossier spam.",
-    emailNotFound: "Aucun compte trouvé avec cette adresse e-mail."
-  },
-  es: {
-    forgotPassword: "Olvidé mi contraseña",
-    resetInstructions: "Ingrese su dirección de correo electrónico y le enviaremos instrucciones para restablecer su contraseña",
-    email: "Correo electrónico",
-    sendResetLink: "Enviar enlace de restablecimiento",
-    sending: "Enviando...",
-    backToLogin: "Volver al inicio de sesión",
-    emailSent: "Enlace de restablecimiento enviado",
-    emailSentDesc: "Revise su bandeja de entrada para obtener instrucciones sobre cómo restablecer su contraseña",
-    errorMessage: "Se produjo un error al enviar el enlace de restablecimiento",
-    emailRequired: "Se requiere la dirección de correo electrónico",
-    validEmail: "Por favor ingrese una dirección de correo electrónico válida",
-    serverError: "Error del servidor. Por favor, inténtelo más tarde.",
-    checkSpam: "Si no ve el correo electrónico en su bandeja de entrada, verifique su carpeta de spam.",
-    emailNotFound: "No se encontró ninguna cuenta con esta dirección de correo electrónico."
-  }
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL ;
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -76,9 +24,14 @@ export default function ForgotPasswordPage() {
   
   const router = useRouter();
   
-  // Get the correct translation function
-  const t = (key) => {
-    return translations[language]?.[key] || key;
+  // Translation helper function that loads translations from external files
+  const t = (key: string) => {
+    try {
+      const translations = require(`../../../public/locales/${language}/common.json`);
+      return translations[key] || key;
+    } catch (error) {
+      return key;
+    }
   };
   
   useEffect(() => {
@@ -95,17 +48,17 @@ export default function ForgotPasswordPage() {
     }
   }, []);
 
-  const handleLanguageChange = (newLang) => {
+  const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
     localStorage.setItem("preferredLanguage", newLang);
   };
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(String(email).toLowerCase());
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     
@@ -132,9 +85,6 @@ export default function ForgotPasswordPage() {
       
       const data = await response.json();
       
-      // We don't want to expose whether an email exists or not for security
-      // So we show a success message even if the email doesn't exist
-      // The actual API should still return a 200 status for this reason
       if (response.ok) {
         setSuccess(true);
         
@@ -153,15 +103,14 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       console.error('Password reset error:', error);
-      setError(error.message || t('serverError'));
+      setError(error instanceof Error ? error.message : t('serverError'));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#f8f5f2] dark:bg-[#1f1a16] transition-colors duration-200 p-4">
-      <div className="w-full max-w-md">
+<main className="min-h-screen flex flex-col items-center justify-center bg-[#f8f5f2] dark:bg-[#1f1a16] transition-colors duration-200 p-4 pb-20">      <div className="w-full max-w-md">
         <div className="absolute top-4 right-4 flex space-x-2">
           <ThemeToggle />
           <LanguageSelector currentLanguage={language} onLanguageChange={handleLanguageChange} />
@@ -254,6 +203,17 @@ export default function ForgotPasswordPage() {
           )}
         </Card>
       </div>
+
+       {/* Footer */}
+      <footer className="w-full bg-[#f1ece8] dark:bg-[#27211d] border-t border-[#e8e1db] dark:border-[#3a322d] py-4 px-6 text-center mt-auto absolute bottom-0 left-0 right-0">
+        <div className="max-w-screen-lg mx-auto flex flex-col sm:flex-row items-center justify-between">
+          <div className="text-sm text-[#9c8578] dark:text-[#a39690] mb-2 sm:mb-0">
+            © 2025 Krypt. {t('allRightsReserved')}
+          </div>
+          
+         
+        </div>
+      </footer>
     </main>
   );
 }

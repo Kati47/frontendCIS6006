@@ -13,36 +13,7 @@ import LanguageSelector from "@/components/language-selector";
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Eye, EyeOff } from "lucide-react";
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-// Simple translations object for client-side access
-const translations = {
-  en: {
-    resetPassword: "Reset Password",
-    resetInstructions: "Please enter a new password for your account",
-    newPassword: "New Password",
-    confirmPassword: "Confirm Password",
-    reset: "Reset Password",
-    resetting: "Resetting...",
-    backToLogin: "Back to login",
-    resetSuccess: "Password Reset Successful",
-    resetSuccessDesc: "Your password has been reset. You can now login with your new password.",
-    invalidLink: "Invalid or expired reset link",
-    invalidLinkDesc: "The password reset link is invalid or has expired. Please request a new one.",
-    verifyingLink: "Verifying reset link...",
-    passwordsNotMatch: "Passwords do not match",
-    passwordTooShort: "Password must be at least 8 characters long",
-    requestNewLink: "Request a new reset link",
-    passwordStrength: "Password must include uppercase, lowercase, number, and special character",
-    redirecting: "Redirecting to login page..."
-  },
-  fr: {
-    // French translations
-  },
-  es: {
-    // Spanish translations
-  }
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -60,20 +31,22 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const currentYear = new Date().getFullYear();
   
-  // Get the correct translation function
-  const t = (key) => {
-    return translations[language]?.[key] || key;
+  // Translation helper function that loads translations from external files
+  const t = (key: string) => {
+    try {
+      const translations = require(`../../../public/locales/${language}/common.json`);
+      return translations[key] || key;
+    } catch (error) {
+      return key;
+    }
   };
   
-  // Add this function right here
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
     localStorage.setItem("preferredLanguage", newLang);
   };
-  // Add this function to your component, right after the t(key) function:
-
-
   
   useEffect(() => {
     // Check for stored language preference
@@ -104,7 +77,7 @@ export default function ResetPasswordPage() {
     verifyToken(emailParam, tokenParam);
   }, [searchParams]);
   
-  const verifyToken = async (email, token) => {
+  const verifyToken = async (email: string, token: string) => {
     try {
       const response = await fetch(`${API_URL}/auth/verify-reset-token`, {
         method: 'POST',
@@ -121,13 +94,13 @@ export default function ResetPasswordPage() {
       setTokenValid(true);
     } catch (error) {
       console.error('Token verification error:', error);
-      setError(error.message || t('invalidLink'));
+      setError(error instanceof Error ? error.message : t('invalidLink'));
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Validate passwords match
@@ -171,7 +144,7 @@ export default function ResetPasswordPage() {
       
     } catch (error) {
       console.error('Password reset error:', error);
-      setError(error.message || t('errorMessage'));
+      setError(error instanceof Error ? error.message : t('errorMessage'));
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +159,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#f8f5f2] dark:bg-[#1f1a16] transition-colors duration-200 p-4">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-[#f8f5f2] dark:bg-[#1f1a16] transition-colors duration-200 p-4 pb-20">
       <div className="w-full max-w-md">
         <div className="absolute top-4 right-4 flex space-x-2">
           <ThemeToggle />
@@ -315,6 +288,17 @@ export default function ResetPasswordPage() {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Footer */}
+      <footer className="w-full bg-[#f1ece8] dark:bg-[#27211d] border-t border-[#e8e1db] dark:border-[#3a322d] py-4 px-6 text-center mt-auto absolute bottom-0 left-0 right-0">
+        <div className="max-w-screen-lg mx-auto flex flex-col sm:flex-row items-center justify-between">
+          <div className="text-sm text-[#9c8578] dark:text-[#a39690] mb-2 sm:mb-0">
+            © {currentYear} Krypt. {t('allRightsReserved')}
+          </div>
+          
+       
+        </div>
+      </footer>
     </main>
   );
 }

@@ -10,90 +10,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageSelector from "@/components/language-selector";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Github, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Toaster, toast } from "sonner";
 
 // API endpoint
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-// Simple translations object (since we're not using a full i18n library)
-const translations = {
-  en: {
-    register: "Register",
-    createAccount: "Create an Account",
-    registerDetails: "Enter your details to create a new account",
-    name: "Full Name",
-    email: "Email",
-    phone: "Phone (optional)",
-    company: "Company (optional)",
-    title: "Job Title (optional)",
-    password: "Password",
-    confirmPassword: "Confirm Password",
-    passwordRequirements: "Password must be at least 8 characters long",
-    passwordsNotMatch: "Passwords do not match",
-    signUp: "Sign up",
-    signingUp: "Signing up...",
-    haveAccount: "Already have an account?",
-    signIn: "Sign in",
-    allRightsReserved: "All rights reserved.",
-    privacyPolicy: "Privacy Policy",
-    termsOfService: "Terms of Service",
-    unexpectedError: "An unexpected error occurred. Please try again.",
-    emailExists: "Email already exists. Please use a different email or login.",
-    signupSuccess: "Account created successfully! Redirecting to login..."
-  },
-  fr: {
-    register: "S'inscrire",
-    createAccount: "Créer un Compte",
-    registerDetails: "Entrez vos informations pour créer un nouveau compte",
-    name: "Nom Complet",
-    email: "E-mail",
-    phone: "Téléphone (optionnel)",
-    company: "Entreprise (optionnel)",
-    title: "Titre de Poste (optionnel)",
-    password: "Mot de passe",
-    confirmPassword: "Confirmer le mot de passe",
-    passwordRequirements: "Le mot de passe doit comporter au moins 8 caractères",
-    passwordsNotMatch: "Les mots de passe ne correspondent pas",
-    signUp: "S'inscrire",
-    signingUp: "Inscription en cours...",
-    haveAccount: "Vous avez déjà un compte?",
-    signIn: "Se connecter",
-    allRightsReserved: "Tous droits réservés.",
-    privacyPolicy: "Politique de confidentialité",
-    termsOfService: "Conditions d'utilisation",
-    unexpectedError: "Une erreur inattendue s'est produite. Veuillez réessayer.",
-    emailExists: "Cet e-mail existe déjà. Veuillez utiliser un autre e-mail ou vous connecter.",
-    signupSuccess: "Compte créé avec succès! Redirection vers la connexion..."
-  },
-  es: {
-    register: "Registrarse",
-    createAccount: "Crear una Cuenta",
-    registerDetails: "Ingrese sus datos para crear una nueva cuenta",
-    name: "Nombre Completo",
-    email: "Correo electrónico",
-    phone: "Teléfono (opcional)",
-    company: "Empresa (opcional)",
-    title: "Cargo (opcional)",
-    password: "Contraseña",
-    confirmPassword: "Confirmar Contraseña",
-    passwordRequirements: "La contraseña debe tener al menos 8 caracteres",
-    passwordsNotMatch: "Las contraseñas no coinciden",
-    signUp: "Registrarse",
-    signingUp: "Registrando...",
-    haveAccount: "¿Ya tiene una cuenta?",
-    signIn: "Iniciar sesión",
-    allRightsReserved: "Todos los derechos reservados.",
-    privacyPolicy: "Política de Privacidad",
-    termsOfService: "Términos de Servicio",
-    unexpectedError: "Ocurrió un error inesperado. Por favor, inténtelo de nuevo.",
-    emailExists: "El correo electrónico ya existe. Use otro correo o inicie sesión.",
-    signupSuccess: "¡Cuenta creada con éxito! Redirigiendo al inicio de sesión..."
-  }
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState("en");
+  const [translations, setTranslations] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -115,8 +41,8 @@ export default function SignupPage() {
   const router = useRouter();
   
   // Get the correct translation function
-  const t = (key) => {
-    return translations[language]?.[key] || key;
+  const t = (key: string): string => {
+    return translations[key] || key;
   };
   
   useEffect(() => {
@@ -133,12 +59,27 @@ export default function SignupPage() {
     }
   }, []);
 
-  const handleLanguageChange = (newLang) => {
+  // Load translations whenever language changes
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        const response = await fetch(`/locales/${language}/common.json`);
+        const data = await response.json();
+        setTranslations(data);
+      } catch (error) {
+        console.error("Failed to load translations:", error);
+      }
+    };
+    
+    loadTranslations();
+  }, [language]);
+
+  const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
     localStorage.setItem("preferredLanguage", newLang);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
@@ -168,7 +109,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Reset error state
@@ -180,7 +121,7 @@ export default function SignupPage() {
         ...prev,
         name: true
       }));
-      setApiError("Name is required");
+      setApiError(t('nameRequired'));
       return;
     }
     
@@ -222,7 +163,7 @@ export default function SignupPage() {
         if (data.errors) {
           // Find the first error message
           const firstError = data.errors[0];
-          throw new Error(firstError.message || "Validation error");
+          throw new Error(firstError.message || t('validationError'));
         }
         
         // Handle other errors
@@ -235,15 +176,16 @@ export default function SignupPage() {
       
       // Show success message
       setSuccess(true);
+      toast.success(t('signupSuccess'));
       
       // Redirect to login after a delay
       setTimeout(() => {
         router.push('/login');
       }, 2000);
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
-      setApiError(error.message || t('unexpectedError'));
+      setApiError(error instanceof Error ? error.message : t('errorCreatingAccount'));
     } finally {
       setIsLoading(false);
     }
@@ -257,10 +199,16 @@ export default function SignupPage() {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
+  // Helper function to get path with language prefix
+  const getLocalizedPath = (path: string) => {
+    return `/${language}${path.startsWith('/') ? path : `/${path}`}`;
+  };
+
   const currentYear = new Date().getFullYear();
 
   return (
     <main className="min-h-screen flex flex-col">
+      <Toaster />
       <div className="flex-grow flex items-center justify-center bg-[#f8f5f2] dark:bg-[#1f1a16] transition-colors duration-200 p-4">
         <div className="w-full max-w-md">
           <div className="absolute top-4 right-4 flex space-x-2">
@@ -314,7 +262,7 @@ export default function SignupPage() {
                     className={`border-[#e8e1db] dark:border-[#3a322d] focus:border-[#bea99a] focus:ring-[#bea99a] shadow-inner bg-white dark:bg-[#27211d] text-[#6d5c4e] dark:text-[#d4c8be] ${errors.name ? 'border-red-300 dark:border-red-800' : ''}`}
                   />
                   {errors.name && (
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-1">Name is required</p>
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-1">{t('nameRequired')}</p>
                   )}
                 </div>
                 
@@ -445,7 +393,7 @@ export default function SignupPage() {
             <CardFooter className="flex justify-center border-t border-[#e8e1db] dark:border-[#3a322d] p-4">
               <p className="text-sm text-[#9c8578] dark:text-[#a39690]">
                 {t('haveAccount')}{" "}
-                <Link href="/login" className="text-[#7d6a5d] dark:text-[#d4c8be] hover:text-[#5d4d41] dark:hover:text-white font-medium transition-colors">
+                <Link href={getLocalizedPath('/login')} className="text-[#7d6a5d] dark:text-[#d4c8be] hover:text-[#5d4d41] dark:hover:text-white font-medium transition-colors">
                   {t('signIn')}
                 </Link>
               </p>
@@ -458,31 +406,10 @@ export default function SignupPage() {
       <footer className="w-full bg-[#f1ece8] dark:bg-[#27211d] border-t border-[#e8e1db] dark:border-[#3a322d] py-4 px-6 text-center">
         <div className="max-w-screen-lg mx-auto flex flex-col sm:flex-row items-center justify-between">
           <div className="text-sm text-[#9c8578] dark:text-[#a39690] mb-2 sm:mb-0">
-            © {currentYear} Authenticate. {t('allRightsReserved')}
+            © {currentYear} Krypt. {t('allRightsReserved')}
           </div>
           
-          <div className="flex items-center space-x-4">
-            <Link 
-              href="/privacy" 
-              className="text-sm text-[#9c8578] dark:text-[#a39690] hover:text-[#7d6a5d] dark:hover:text-[#d4c8be]"
-            >
-              {t('privacyPolicy')}
-            </Link>
-            <Link 
-              href="/terms" 
-              className="text-sm text-[#9c8578] dark:text-[#a39690] hover:text-[#7d6a5d] dark:hover:text-[#d4c8be]"
-            >
-              {t('termsOfService')}
-            </Link>
-            <a 
-              href="https://github.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-[#9c8578] dark:text-[#a39690] hover:text-[#7d6a5d] dark:hover:text-[#d4c8be]"
-            >
-              <Github size={18} />
-            </a>
-          </div>
+         
         </div>
       </footer>
     </main>
